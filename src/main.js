@@ -5,7 +5,7 @@ import router from './router'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
-import './style.css'
+import './static/main.css'
 
 const app = createApp(App)
 const pinia = createPinia()

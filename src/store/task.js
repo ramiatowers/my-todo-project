@@ -1,5 +1,26 @@
-import { createPinia } from 'pinia'
+import { defineStore } from 'pinia'
+import { supabase } from '@/lib/supabase'
+import { useUserStore } from './user'
 
-const pinia = createPinia()
+export const useTaskStore = defineStore('task', {
+  state: () => ({
+    tasks: []
+  }),
+  actions: {
+    async addTask(title) {
+      const userStore = useUserStore()
+      const user = userStore.user
 
-export default pinia
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{ title, user_id: user.id }])
+        .select()
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        this.tasks.push(data[0])
+      }
+    }
+  }
+})

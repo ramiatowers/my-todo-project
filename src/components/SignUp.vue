@@ -24,3 +24,6 @@ const handleRegister = async () => {
   }
 }
 </script>
+
+<style scoped>
+</style>
