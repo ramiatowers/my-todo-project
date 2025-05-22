@@ -20,8 +20,11 @@ const router = useRouter()
 const handleLogin = async () => {
   try {
     await userStore.signIn(email.value, password.value)
-    alert('Login successful')
-    router.push('/dashboard')  // 👈 Redirección al dashboard
+
+    // Esperamos a que el usuario esté seteado correctamente
+    if (userStore.user) {
+      router.push('/dashboard')
+    }
   } catch (error) {
     alert(error.message)
   }

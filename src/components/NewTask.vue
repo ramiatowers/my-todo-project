@@ -21,7 +21,6 @@ const handleSubmit = async () => {
   if (!title.value.trim()) return
   try {
     await taskStore.addTask(title.value)
-    alert('Task added!')
     title.value = ''
   } catch (err) {
     alert(err.message)
