@@ -19,4 +19,14 @@ const logout = async () => {
 </script>
 
 <style scoped>
+.app-header {
+  background-color: aqua;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>

@@ -26,16 +26,22 @@ export const useTaskStore = defineStore('task', {
       const userStore = useUserStore()
       const user = userStore.user
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('tasks')
-        .insert([{ title, user_id: user.id }])
-        .select()
+        .insert([
+          {
+            title,
+            user_id: user.id,
+            status: 'Pending',
+            elapsed_time: 0,
+            last_start: null
+          }
+        ])
 
       if (error) throw error
 
-      if (data && data.length > 0) {
-        this.tasks.push(data[0])
-      }
+      // Volvemos a traer las tareas actualizadas
+      await this.fetchTasks()
     },
     
     async deleteTask(id) {
@@ -50,19 +56,44 @@ export const useTaskStore = defineStore('task', {
       this.tasks = this.tasks.filter(task => task.id !== id)
     },
 
-    async toggleComplete(id, currentValue) {
+    async updateStatus(id, newStatus) {
+      const task = this.tasks.find(t => t.id === id)
+      if (!task) return
+
+      const now = new Date()
+      const updates = { status: newStatus }
+
+      // Si pasa a "In progress"
+      if (newStatus === 'In progress') {
+        updates.last_start = now.toISOString()
+      }
+
+      // Si pasa a "On-hold" o "Done"
+      if (['On-hold', 'Done'].includes(newStatus)) {
+        const lastStart = task.last_start ? new Date(task.last_start) : null
+
+        if (lastStart) {
+          const elapsedSoFar = typeof task.elapsed_time === 'number' ? task.elapsed_time : 0
+          const diffInSeconds = Math.floor((now - lastStart) / 1000)
+          updates.elapsed_time = elapsedSoFar + diffInSeconds
+
+          // No tocamos last_start → lo dejamos como está
+        }
+      }
+
+      // ⛑ Proteger campo si no se está actualizando
+      if (!('last_start' in updates)) {
+        updates.last_start = task.last_start
+      }
+
       const { error } = await supabase
         .from('tasks')
-        .update({ is_complete: !currentValue })
+        .update(updates)
         .eq('id', id)
 
       if (error) throw error
 
-      // Actualizamos el estado local
-      const task = this.tasks.find(t => t.id === id)
-      if (task) {
-        task.is_complete = !currentValue
-      }
+      Object.assign(task, updates)
     }
   }
 })

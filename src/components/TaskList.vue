@@ -12,7 +12,7 @@
 
     <!-- Tareas completadas -->
     <div>
-      <h2>Completed</h2>
+      <h2>Done</h2>
       <TaskItem
         v-for="task in completeTasks"
         :key="task.id"
@@ -37,10 +37,10 @@ onMounted(() => {
 
 // Separar tareas según su estado
 const incompleteTasks = computed(() =>
-  tasks.value.filter(task => !task.is_complete)
+  tasks.value.filter(task => task.status !== 'Done')
 )
 
 const completeTasks = computed(() =>
-  tasks.value.filter(task => task.is_complete)
+  tasks.value.filter(task => task.status === 'Done')
 )
 </script>
