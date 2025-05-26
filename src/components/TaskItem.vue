@@ -1,120 +1,316 @@
 <template>
-  <div class="task-card" :class="statusClass">
-    <p class="task-title">{{ task.title }}</p>
+  <section class="task-card" :class="statusClass">
+    <header class="header-menu">
+      <!-- CHANGE CONTROLS MENU -->
+      <div class="change-controls">
+        <button @click="menuOpen = !menuOpen" class="menu-btn">
+          <!-- Inline SVG (tres puntos verticales) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-check"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <ChangeMenu
+          v-if="menuOpen"
+          @info="showInfo"
+          @edit="emitEdit"
+          @delete="handleDelete"
+          @close="menuOpen = false"
+        />
+      </div>    
+      
+      <!-- CHECK BUTTON -->
+      <button
+        @click="confirmToggleDone"
+        class="check-btn"
+        :class="{ active: task.status === 'Done' }"
+      >
+        <svg
+          v-if="task.status === 'Done'"
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon-check"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
+          />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
 
-    <select v-model="selectedStatus" @change="handleStatusChange">
-      <option v-for="option in statusOptions" :key="option" :value="option">
-        {{ option }}
-      </option>
-    </select>
+        <svg
+          v-else
+          xmlns="http://www.w3.org/2000/svg"
+          class="icon-check"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
+          />
+        </svg>
+      </button>
+    </header>
 
-    <button @click="handleDelete">Delete</button>
+    <!-- TITLE & DESCRIPTION -->
+    <h2 class="task-title">{{ task.title }}</h2>
+    <p class="task-desc">{{ task.description }}</p>
 
-    <p class="task-time">
-      Time spent:
-      {{ props.task.status === 'In progress' ? formatTime(runningTime) : formatTime(props.task.elapsed_time) }}
-    </p>
-    <svg></svg>
-  </div>
+    <!-- TIME + PLAY/PAUSE -->
+    <div class="time-controls">
+      <span class="clock">{{ formattedTime }}</span>
+      <div class="task-buttons">
+        <button
+          v-if="task.status !== 'In progress'"
+          @click="() => changeStatus('In progress', 'Start working on this task?')"
+          class="status-btn"
+        >
+          <svg
+            class="icon-control"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            >
+            <polygon points="6 3 20 12 6 21 6 3" />
+          </svg>
+        </button>
+        <button
+          v-if="task.status === 'In progress'"
+          @click="() => changeStatus('On-hold', 'Pause this task?')"
+          class="status-btn"
+        >
+          <svg
+            class="icon-control"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useTaskStore } from '@/store/task'
+import checkEmpty from '@/assets/square.svg'
+import checkDone from '@/assets/square-check-big.svg'
+import ChangeMenu from './ChangeMenu.vue'
 
+const props = defineProps({ task: Object })
+const emit = defineEmits(['edit'])
 const taskStore = useTaskStore()
+const menuOpen = ref(false)
 
-const props = defineProps({
-  task: {
-    type: Object,
-    required: true
-  }
-})
-
-const selectedStatus = ref(props.task.status)
-
-const statusOptions = ['Pending', 'In progress', 'On-hold', 'Done', 'Undo']
-
-const handleDelete = () => {
-  taskStore.deleteTask(props.task.id)
-}
-
-const handleStatusChange = () => {
-  const needsConfirmation = ['In progress', 'Done'].includes(selectedStatus.value)
-  if (needsConfirmation) {
-    const confirmed = confirm(`Are you sure you want to mark this task as "${selectedStatus.value}"?`)
-    if (!confirmed) {
-      selectedStatus.value = props.task.status
-      return
-    }
-  }
-
-  taskStore.updateStatus(props.task.id, selectedStatus.value)
-}
-
-const formatTime = (seconds) => {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return [h, m, s].map(v => String(v).padStart(2, '0')).join(':')
-}
-
-// 🕒 Tiempo real
 const runningTime = ref(props.task.elapsed_time)
-let intervalId = null
+let timer = null
 
-const startTimer = () => {
-  stopTimer()
-  intervalId = setInterval(() => {
-    if (props.task.last_start) {
-      const start = new Date(props.task.last_start)
-      const now = new Date()
-      const diff = Math.floor((now - start) / 1000)
-      runningTime.value = props.task.elapsed_time + diff
-    }
-  }, 1000)
+const tick = () => {
+  const start = new Date(props.task.last_start)
+  const diff = Math.floor((Date.now() - start) / 1000)
+  runningTime.value = props.task.elapsed_time + diff
 }
 
-const stopTimer = () => {
-  if (intervalId) {
-    clearInterval(intervalId)
-    intervalId = null
-  }
-}
-
-// 💡 Colores dinámicos
-const statusClass = computed(() => {
-  switch (props.task.status) {
-    case 'Pending':
-      return 'bg-gray'
-    case 'In progress':
-      return 'bg-blue'
-    case 'On-hold':
-      return 'bg-orange'
-    case 'Done':
-      return 'bg-green'
-    case 'Undo':
-      return 'bg-red'
-    default:
-      return ''
-  }
-})
-
-// 🔁 Reactividad
 watch(
   () => [props.task.status, props.task.last_start],
-  ([status, lastStart]) => {
-    if (status === 'In progress' && lastStart) {
-      startTimer()
+  () => {
+    clearInterval(timer)
+    if (props.task.status === 'In progress' && props.task.last_start) {
+      tick()
+      timer = setInterval(tick, 1000)
     } else {
-      stopTimer()
       runningTime.value = props.task.elapsed_time
     }
   },
   { immediate: true }
 )
 
-onUnmounted(() => {
-  stopTimer()
+onUnmounted(() => clearInterval(timer))
+
+const formattedTime = computed(() => formatTime(runningTime.value))
+
+const statusClass = computed(() => {
+  return {
+    'bg-gray': ['Pending', 'Undo'].includes(props.task.status),
+    'bg-blue': props.task.status === 'In progress',
+    'bg-orange': props.task.status === 'On-hold',
+    'bg-green': props.task.status === 'Done'
+  }
 })
+
+function formatTime(seconds) {
+  const h = String(Math.floor(seconds / 3600)).padStart(2, '0')
+  const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')
+  const s = String(seconds % 60).padStart(2, '0')
+  return `${h}:${m}:${s}`
+}
+
+function formatTS(ts) {
+  return ts ? new Date(ts).toLocaleString() : '--'
+}
+
+function confirmToggleDone() {
+  const message = props.task.status === 'Done'
+    ? 'Mark this task as not done?'
+    : 'Mark this task as complete?'
+
+  if (confirm(message)) {
+    toggleDone()
+  }
+}
+
+function toggleDone() {
+  const next = props.task.status === 'Done' ? 'Undo' : 'Done'
+  taskStore.updateStatus(props.task.id, next)
+}
+
+const checkIcon = computed(() =>
+  props.task.status === 'Done' ? checkDone : checkEmpty
+)
+
+function changeStatus(newStatus, message) {
+  if (confirm(message)) {
+    taskStore.updateStatus(props.task.id, newStatus)
+  }
+}
+
+function handleDelete() {
+  if (confirm('Are you sure you want to delete this task?')) {
+    taskStore.deleteTask(props.task.id)
+  }
+}
+
+function emitEdit() {
+  emit('edit', props.task)
+}
+
+function showInfo() {
+  alert(`Created: ${formatTS(props.task.created_at)}\nUpdated: ${formatTS(props.task.updated_at)}`)
+}
 </script>
+
+<style scoped>
+.task-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 20px rgba(0, 132, 255, 0.2);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  max-width: 100%;
+}
+
+.bg-gray    { background-color: var(--color-pending); }
+.bg-blue    { background-color: var(--color-progress); }
+.bg-orange  { background-color: var(--color-hold); }
+.bg-green   { background-color: var(--color-done); }
+.bg-pink    { background-color: var(--color-undo); }
+
+button {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-menu {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  filter: drop-shadow(0 0 2px #00ffee);
+}
+
+.change-controls {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.5rem 1rem;
+}
+
+.check-btn {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.5rem;
+  transition: filter 0.2s ease;
+}
+
+.icon-check {
+  width: 1rem;
+  height: 1rem;
+  stroke: currentColor;
+  filter: drop-shadow(0 0 4px #ff00d4);
+  transition: filter 0.2s ease;
+}
+
+.check-btn.active .icon-check {
+  filter: drop-shadow(0 0 2px #02ffb3);
+}
+
+.task-title {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem 0.5rem 1rem;
+}
+
+.task-desc {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  padding: 0.5rem;
+  margin: 0 0.5rem;
+  border: 0.1rem solid #02ffb3;
+  border-radius: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #02ffb3;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.task-desc:hover {
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.15);
+  border-color: var(--color-progress);
+}
+
+.time-controls {
+  display: flex;
+  gap: 1rem;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+.clock {
+  font-family: var(--font-tech);
+  font-size: 2rem;
+  color: #02ffb3;
+  text-shadow: var(--glow-cyan);
+}
+
+.icon-control {
+  width: 2rem;
+  height: 2rem;
+  color: #02ffb3;
+}
+</style>

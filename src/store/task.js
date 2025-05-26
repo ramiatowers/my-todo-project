@@ -1,3 +1,4 @@
+// src/store/task.js
 import { defineStore } from 'pinia'
 import { supabase } from '@/lib/supabase'
 import { useUserStore } from './user'
@@ -22,7 +23,7 @@ export const useTaskStore = defineStore('task', {
       this.tasks = data
     },
 
-    async addTask(title) {
+    async addTask(title, description) {
       const userStore = useUserStore()
       const user = userStore.user
 
@@ -31,6 +32,7 @@ export const useTaskStore = defineStore('task', {
         .insert([
           {
             title,
+            description,
             user_id: user.id,
             status: 'Pending',
             elapsed_time: 0,
@@ -39,11 +41,9 @@ export const useTaskStore = defineStore('task', {
         ])
 
       if (error) throw error
-
-      // Volvemos a traer las tareas actualizadas
       await this.fetchTasks()
     },
-    
+
     async deleteTask(id) {
       const { error } = await supabase
         .from('tasks')
@@ -51,8 +51,6 @@ export const useTaskStore = defineStore('task', {
         .eq('id', id)
 
       if (error) throw error
-
-      // Actualizamos el estado local
       this.tasks = this.tasks.filter(task => task.id !== id)
     },
 
@@ -63,25 +61,19 @@ export const useTaskStore = defineStore('task', {
       const now = new Date()
       const updates = { status: newStatus }
 
-      // Si pasa a "In progress"
       if (newStatus === 'In progress') {
         updates.last_start = now.toISOString()
       }
 
-      // Si pasa a "On-hold" o "Done"
       if (['On-hold', 'Done'].includes(newStatus)) {
         const lastStart = task.last_start ? new Date(task.last_start) : null
-
         if (lastStart) {
           const elapsedSoFar = typeof task.elapsed_time === 'number' ? task.elapsed_time : 0
           const diffInSeconds = Math.floor((now - lastStart) / 1000)
           updates.elapsed_time = elapsedSoFar + diffInSeconds
-
-          // No tocamos last_start → lo dejamos como está
         }
       }
 
-      // ⛑ Proteger campo si no se está actualizando
       if (!('last_start' in updates)) {
         updates.last_start = task.last_start
       }
@@ -92,8 +84,21 @@ export const useTaskStore = defineStore('task', {
         .eq('id', id)
 
       if (error) throw error
-
       Object.assign(task, updates)
+    },
+
+    async updateTask(id, updates) {
+      const { error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', id)
+
+      if (error) throw error
+
+      const index = this.tasks.findIndex(t => t.id === id)
+      if (index !== -1) {
+        this.tasks[index] = { ...this.tasks[index], ...updates }
+      }
     }
   }
 })

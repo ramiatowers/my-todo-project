@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "@vueuse/core": "^13.2.0",
     "pinia": "^3.0.2",
     "pinia-plugin-persist": "^1.0.0",
     "pinia-plugin-persistedstate": "^4.3.0",

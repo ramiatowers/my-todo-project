@@ -20,7 +20,7 @@ const logout = async () => {
 
 <style scoped>
 .app-header {
-  background-color: aqua;
+  background-color: #151922;
   margin: 0;
   padding: 0;
   display: flex;
