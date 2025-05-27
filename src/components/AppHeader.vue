@@ -1,6 +1,6 @@
 <template>
   <header class="app-header">
-    <h1>My Todo App</h1>
+    <h1>BEFORE THE END</h1>
     <button @click="logout">Log Out</button>
   </header>
 </template>
@@ -21,12 +21,15 @@ const logout = async () => {
 <style scoped>
 .app-header {
   background-color: #151922;
-  margin: 0;
-  padding: 0;
+  padding: 1rem 1rem 0rem 1rem;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.app-header button {
+ font-size: 0.9rem;
 }
 </style>

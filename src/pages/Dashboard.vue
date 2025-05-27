@@ -1,7 +1,6 @@
 <template>
   <div class="dashboard-wrapper">
     <AppHeader />
-
     <main class="dashboard-content">
       <TaskList />
       <NewTask />
@@ -21,12 +20,6 @@ import TaskList from '@/components/TaskList.vue'
   flex-direction: column;
   min-height: 100vh;
   background-color: #323441;
+  padding-bottom: 6rem;
 }
-
-.dashboard-content {
-  display: flex;
-  flex-direction: column;
-  font-family: 'Orbitron';
-}
-
 </style>

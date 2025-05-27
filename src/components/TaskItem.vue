@@ -1,24 +1,29 @@
+<!-- TASKITEM.VUE ACTUALIZADO -->
 <template>
   <section class="task-card" :class="statusClass">
     <header class="header-menu">
-      <!-- CHANGE CONTROLS MENU -->
       <div class="change-controls">
-        <button @click="menuOpen = !menuOpen" class="menu-btn">
-          <!-- Inline SVG (tres puntos verticales) -->
+        <button
+          @click="menuOpen = !menuOpen"
+          class="menu-btn"
+          :class="{ done: task.status === 'Done' }"
+        >
+          <!-- Ícono rueda -->
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-check"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
         <ChangeMenu
           v-if="menuOpen"
-          @info="showInfo"
-          @edit="emitEdit"
-          @delete="handleDelete"
+          :is-done="task.status === 'Done'"
+          @info="$emit('info', task)"
+          @edit="$emit('edit', task)"
+          @delete="$emit('delete', task)"
           @close="menuOpen = false"
         />
-      </div>    
-      
+      </div>
+
       <!-- CHECK BUTTON -->
       <button
-        @click="confirmToggleDone"
+        @click="emitCheck"
         class="check-btn"
         :class="{ active: task.status === 'Done' }"
       >
@@ -33,9 +38,7 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path
-            d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
-          />
+          <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
           <path d="m9 12 2 2 4-4" />
         </svg>
 
@@ -50,24 +53,21 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path
-            d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
-          />
+          <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
         </svg>
       </button>
     </header>
 
-    <!-- TITLE & DESCRIPTION -->
     <h2 class="task-title">{{ task.title }}</h2>
     <p class="task-desc">{{ task.description }}</p>
 
-    <!-- TIME + PLAY/PAUSE -->
     <div class="time-controls">
       <span class="clock">{{ formattedTime }}</span>
       <div class="task-buttons">
+        <!-- PLAY BUTTON -->
         <button
           v-if="task.status !== 'In progress'"
-          @click="() => changeStatus('In progress', 'Start working on this task?')"
+          @click="emitTimerConfirm('In progress')"
           class="status-btn"
         >
           <svg
@@ -79,13 +79,15 @@
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            >
+          >
             <polygon points="6 3 20 12 6 21 6 3" />
           </svg>
         </button>
+
+        <!-- PAUSE BUTTON -->
         <button
-          v-if="task.status === 'In progress'"
-          @click="() => changeStatus('On-hold', 'Pause this task?')"
+          v-else
+          @click="emitTimerConfirm('On-hold')"
           class="status-btn"
         >
           <svg
@@ -110,12 +112,10 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useTaskStore } from '@/store/task'
-import checkEmpty from '@/assets/square.svg'
-import checkDone from '@/assets/square-check-big.svg'
 import ChangeMenu from './ChangeMenu.vue'
 
 const props = defineProps({ task: Object })
-const emit = defineEmits(['edit'])
+const emit = defineEmits(['edit', 'delete', 'info', 'check', 'timer'])
 const taskStore = useTaskStore()
 const menuOpen = ref(false)
 
@@ -162,47 +162,16 @@ function formatTime(seconds) {
   return `${h}:${m}:${s}`
 }
 
-function formatTS(ts) {
-  return ts ? new Date(ts).toLocaleString() : '--'
+function emitTimerConfirm(status) {
+  emit('timer', { task: props.task, nextStatus: status })
 }
 
-function confirmToggleDone() {
-  const message = props.task.status === 'Done'
-    ? 'Mark this task as not done?'
-    : 'Mark this task as complete?'
-
-  if (confirm(message)) {
-    toggleDone()
-  }
+function emitDelete() {
+  emit('delete', props.task)
 }
 
-function toggleDone() {
-  const next = props.task.status === 'Done' ? 'Undo' : 'Done'
-  taskStore.updateStatus(props.task.id, next)
-}
-
-const checkIcon = computed(() =>
-  props.task.status === 'Done' ? checkDone : checkEmpty
-)
-
-function changeStatus(newStatus, message) {
-  if (confirm(message)) {
-    taskStore.updateStatus(props.task.id, newStatus)
-  }
-}
-
-function handleDelete() {
-  if (confirm('Are you sure you want to delete this task?')) {
-    taskStore.deleteTask(props.task.id)
-  }
-}
-
-function emitEdit() {
-  emit('edit', props.task)
-}
-
-function showInfo() {
-  alert(`Created: ${formatTS(props.task.created_at)}\nUpdated: ${formatTS(props.task.updated_at)}`)
+function emitCheck() {
+  emit('check', props.task)
 }
 </script>
 
@@ -250,14 +219,25 @@ button {
   position: relative;
   display: flex;
   justify-content: flex-end;
-  margin: 0.5rem 1rem;
+  padding: 0.5rem;
 }
 
 .check-btn {
   display: flex;
   justify-content: flex-end;
-  margin: 0.5rem;
+  padding: 0.5rem;
   transition: filter 0.2s ease;
+}
+
+.menu-btn {
+  color: white;
+  filter: drop-shadow(0 0 2px #ff00d4);
+  transition: color 0.3s ease;
+}
+
+.menu-btn.done {
+  color: white;
+  filter: drop-shadow(0 0 2px #02ffb3);
 }
 
 .icon-check {
@@ -285,7 +265,7 @@ button {
   margin: 0 0.5rem;
   border: 0.1rem solid #02ffb3;
   border-radius: 1rem;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.0);
   color: #02ffb3;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -303,7 +283,7 @@ button {
 }
 .clock {
   font-family: var(--font-tech);
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: #02ffb3;
   text-shadow: var(--glow-cyan);
 }
@@ -312,5 +292,6 @@ button {
   width: 2rem;
   height: 2rem;
   color: #02ffb3;
+  padding: 0;
 }
 </style>
