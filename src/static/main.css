@@ -101,15 +101,33 @@ html body {
 
 @media screen and (min-width: 1024px) {
   .task-section {
-    display: flex;
     flex-direction: row;
     justify-content: center;
+    align-items: flex-start;
     gap: 2rem;
-    padding: 2rem;
   }
 
   .task-column {
-    flex: 1;
-    max-width: 45%;
+    width: 100%;
+    max-width: 500px;
+  }
+
+
+  .app-header button {
+  all: unset;
+  cursor: pointer;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0rem 2rem 1rem 0rem;
+}
+
+  .logout {
+  display: flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #00ffee;
   }
 }

@@ -306,6 +306,7 @@ button {
   font-size: 1.5rem;
   color: #02ffb3;
   text-shadow: var(--glow-cyan);
+  padding: 0rem 1rem;
 
 }
 

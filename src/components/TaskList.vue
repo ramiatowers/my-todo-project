@@ -179,7 +179,7 @@ const completeTasks = computed(() =>
 onMounted(() => taskStore.fetchTasks())
 </script>
 
-<style scoped>
+<style>
 
 .task-section {
   display: flex;
