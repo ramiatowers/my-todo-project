@@ -35,13 +35,13 @@ const props = defineProps({
   position: absolute;
   top: 0rem;
   left: 2rem;
-  padding: 0rem 0.3rem;
-  margin: 0.1rem 0;
+  padding: 0rem 0.5rem;
+  margin: 0.25rem 0rem 0rem 0rem;
   background: #ff00d421;
   border-radius: 0.5rem;
   display: flex;
   flex-direction: row;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .popup-done {

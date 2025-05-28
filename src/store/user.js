@@ -20,7 +20,12 @@ export const useUserStore = defineStore('user', {
         password
       })
       if (error) throw error
-      this.user = data.user
+
+      const {
+        data: { user }
+      } = await supabase.auth.getUser() // 👈 asegurás que lo traiga actualizado
+
+      this.user = user
     },
 
     async signIn(email, password) {

@@ -20,6 +20,12 @@ import TaskList from '@/components/TaskList.vue'
   flex-direction: column;
   min-height: 100vh;
   background-color: #323441;
-  padding-bottom: 6rem;
+  position: relative;
+}
+
+.dashboard-content {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 4rem;
 }
 </style>

@@ -48,18 +48,25 @@ function cancelForm() {
 <style scoped>
 .floating-add-btn {
   position: fixed;
-  bottom: 2rem;
+  bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 100;
   font-size: 2rem;
   background: #00ffee;
-  color: black;
   border: none;
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
+  width: 3rem;
+  height: 3rem;
   box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
   cursor: pointer;
-  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-add-btn:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
 </style>

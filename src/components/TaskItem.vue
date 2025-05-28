@@ -1,4 +1,3 @@
-<!-- TASKITEM.VUE ACTUALIZADO -->
 <template>
   <section class="task-card" :class="statusClass">
     <header class="header-menu">
@@ -23,7 +22,7 @@
 
       <!-- CHECK BUTTON -->
       <button
-        @click="emitCheck"
+        @click.stop="() => { console.log('CLICK en botón CHECK'); emitCheck() }"
         class="check-btn"
         :class="{ active: task.status === 'Done' }"
       >
@@ -60,46 +59,48 @@
 
     <h2 class="task-title">{{ task.title }}</h2>
     <p class="task-desc">{{ task.description }}</p>
-
+    
     <div class="time-controls">
-      <span class="clock">{{ formattedTime }}</span>
+      <!-- RESET -->
       <div class="task-buttons">
-        <!-- PLAY BUTTON -->
         <button
-          v-if="task.status !== 'In progress'"
-          @click="emitTimerConfirm('In progress')"
-          class="status-btn"
+          v-if="['Pending', 'On-hold', 'Undo'].includes(task.status) && runningTime > 0"
+          @click="handleResetClick"
+          class="status-btn reset-btn"
+          ref="resetBtn"
+          title="Reset Timer"
         >
-          <svg
-            class="icon-control"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg class="icon-control-reset" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- CLOCK -->
+      <span class="clock">{{ formattedTime }}</span>
+
+      <!-- PLAY/PAUSE -->
+      <div class="task-buttons">
+        <button
+          v-if="props.task.status !== 'In progress'"
+          @click="handlePlayPauseClick('In progress')"
+          class="status-btn playpause-btn"
+          ref="playPauseBtn"
+          title="Start"
+        >
+          <svg class="icon-control" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="6 3 20 12 6 21 6 3" />
           </svg>
         </button>
 
-        <!-- PAUSE BUTTON -->
         <button
           v-else
-          @click="emitTimerConfirm('On-hold')"
-          class="status-btn"
+          @click="handlePlayPauseClick('On-hold')"
+          class="status-btn playpause-btn"
+          ref="playPauseBtn"
+          title="Pause"
         >
-          <svg
-            class="icon-control"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg class="icon-control" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="14" y="4" width="4" height="16" rx="1" />
             <rect x="6" y="4" width="4" height="16" rx="1" />
           </svg>
@@ -115,11 +116,15 @@ import { useTaskStore } from '@/store/task'
 import ChangeMenu from './ChangeMenu.vue'
 
 const props = defineProps({ task: Object })
-const emit = defineEmits(['edit', 'delete', 'info', 'check', 'timer'])
+const emit = defineEmits(['edit', 'delete', 'info', 'check', 'timer', 'reset'])
 const taskStore = useTaskStore()
 const menuOpen = ref(false)
 
+const resetBtn = ref(null)
+const playPauseBtn = ref(null)
+
 const runningTime = ref(props.task.elapsed_time)
+console.log('STATUS:', props.task.status, '| TIME:', runningTime.value)
 let timer = null
 
 const tick = () => {
@@ -166,12 +171,27 @@ function emitTimerConfirm(status) {
   emit('timer', { task: props.task, nextStatus: status })
 }
 
-function emitDelete() {
-  emit('delete', props.task)
+function emitCheck() {
+  console.log('Emitiendo check para:', props.task)
+  emit('check', props.task)
 }
 
-function emitCheck() {
-  emit('check', props.task)
+function emitReset() {
+  const btn = document.activeElement
+  if (btn && btn.classList.contains('reset-btn')) {
+    btn.classList.add('flash')
+    setTimeout(() => btn.classList.remove('flash'), 600)
+  }
+  emit('reset', task)
+}
+
+function handlePlayPauseClick(nextStatus) {
+  emit('timer', { task: props.task, nextStatus })
+}
+
+function handleResetClick() {
+  console.log('Estado:', props.task.status, '| Tiempo:', runningTime.value)
+  emit('reset', props.task)
 }
 </script>
 
@@ -255,17 +275,17 @@ button {
 .task-title {
   font-family: var(--font-title);
   font-size: 1.2rem;
-  padding: 0.5rem 1rem 0.5rem 1rem;
+  padding: 0.5rem 1rem 0rem 1rem;
 }
 
 .task-desc {
   font-family: var(--font-body);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   padding: 0.5rem;
-  margin: 0 0.5rem;
-  border: 0.1rem solid #02ffb3;
+  margin: 0.5rem;
+  border: 0.09rem solid #02ffb3;
   border-radius: 1rem;
-  background-color: rgba(0, 0, 0, 0.0);
+  background-color: rgba(0, 0, 0, 0.1);
   color: #02ffb3;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -283,15 +303,34 @@ button {
 }
 .clock {
   font-family: var(--font-tech);
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   color: #02ffb3;
   text-shadow: var(--glow-cyan);
+
+}
+
+.time-controls{
+    display: flex;
+    align-items: center;
+}
+
+.status-btn {
+  padding: 0.3rem 0rem 0rem 0rem;
 }
 
 .icon-control {
-  width: 2rem;
-  height: 2rem;
+  width: 1rem;
+  height: 1rem;
   color: #02ffb3;
   padding: 0;
+  fill: #02ffb3;
+}
+
+.icon-control-reset {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: #02ffb3;
+  padding: 0;
+  fill: #02ffb3;
 }
 </style>

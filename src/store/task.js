@@ -11,37 +11,48 @@ export const useTaskStore = defineStore('task', {
   actions: {
     async fetchTasks() {
       const userStore = useUserStore()
-      const user = userStore.user
 
+      // Asegurarse de tener el usuario autenticado
+      if (!userStore.user) await userStore.fetchUser()
+      const userId = userStore.user?.id
+      if (!userId) throw new Error('Unauthenticated user.')
+
+      // Consultar tareas del usuario
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error getting tasks:', error.message)
+        throw error
+      }
+
       this.tasks = data
     },
 
     async addTask(title, description) {
       const userStore = useUserStore()
-      const user = userStore.user
 
-      const { error } = await supabase
+      // Asegurarse que el usuario está cargado
+      if (!userStore.user) await userStore.fetchUser()
+      const userId = userStore.user?.id
+      if (!userId) throw new Error('Unauthenticated user.')
+
+      // Insertar tarea
+      const { data, error } = await supabase
         .from('tasks')
-        .insert([
-          {
-            title,
-            description,
-            user_id: user.id,
-            status: 'Pending',
-            elapsed_time: 0,
-            last_start: null
-          }
-        ])
+        .insert([{ title, description, user_id: userId }])
+        .select()
 
-      if (error) throw error
-      await this.fetchTasks()
+      if (error) {
+        console.error('❌ Error getting tasks:', error.message)
+        throw error
+      }
+
+      // Agregar la nueva tarea al comienzo de la lista local
+      this.tasks.unshift(data[0])
     },
 
     async deleteTask(id) {
@@ -74,6 +85,7 @@ export const useTaskStore = defineStore('task', {
         }
       }
 
+      // Mantener el last_start anterior si no fue actualizado
       if (!('last_start' in updates)) {
         updates.last_start = task.last_start
       }
@@ -83,7 +95,11 @@ export const useTaskStore = defineStore('task', {
         .update(updates)
         .eq('id', id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error updating status:', error.message)
+        throw error
+      }
+
       Object.assign(task, updates)
     },
 
@@ -93,11 +109,35 @@ export const useTaskStore = defineStore('task', {
         .update(updates)
         .eq('id', id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error updating task:', error.message)
+        throw error
+      }
 
       const index = this.tasks.findIndex(t => t.id === id)
       if (index !== -1) {
         this.tasks[index] = { ...this.tasks[index], ...updates }
+      }
+    },
+
+    async updateElapsedTime(id, newTime = 0) {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({
+          elapsed_time: newTime,
+          last_start: null
+        })
+        .eq('id', id)
+        .select()
+
+      if (error) {
+        console.error('❌ Error resetting timer:', error.message)
+      } else {
+        const index = this.tasks.findIndex(t => t.id === id)
+        if (index !== -1) {
+          this.tasks[index].elapsed_time = newTime
+          this.tasks[index].last_start = null
+        }
       }
     }
   }
